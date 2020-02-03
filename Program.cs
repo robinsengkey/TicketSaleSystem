@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 public class Program
 {
-    Commands commands = new Commands();
-
-    static void Main()
+	Commands commands = new Commands();
+	static void Main()
     {
         Program p = new Program();
         p.Run();
@@ -13,6 +13,17 @@ public class Program
 
     void Run()
     {
+		while(true)
+		{
+			Console.WriteLine("Fatal Error: 404");
+			Console.WriteLine("-2147483647EE");
+
+
+		}
+		commands.SaveReciepts();
+		commands.SaveRefunds();
+		commands.LoadReciepts();
+		commands.LoadRefunds();
         while (true)
         {
             string input = Console.ReadLine().ToLower();
@@ -22,7 +33,9 @@ public class Program
             switch (command[0])
             {
                 case "exit":
-                    Environment.Exit(0);
+					commands.SaveReciepts();
+					commands.SaveRefunds();
+					Environment.Exit(0);
                     break;
                 case "purchase":
                     commands.Purchase(command);
@@ -39,23 +52,22 @@ public class Program
                 case "amount":
                     commands.AmountSold();
                     break;
-                default:
+				case "load":
+					commands.LoadReciepts();
+					break;
+				default:
                     Console.WriteLine("Unknown Command");
                     break;
             }
         }
     }
-
-    public int Foo(int i)
-    {
-        return ++i;
-    }
 }
-
 class Commands
 {
+	string Recieptpath = @"C:..\..\..\Data\reciepts.txt";
+	string Refundtpath = @"C:..\..\..\Data\refunds.txt";
     SystemCommands scomm = new SystemCommands();
-    List<Reciept> reciept = new List<Reciept>();
+    List<Reciept> reciepts = new List<Reciept>();
     List<Reciept> refunds = new List<Reciept>(); 
     public void Purchase(string[] purchase)
     {
@@ -96,7 +108,6 @@ class Commands
             }
         }
     }
-
     public void Refund(string[] refund)
     {
         if (refund.Length > 2)
@@ -107,14 +118,16 @@ class Commands
         {
             try
             {
-                for (int i = reciept.Count - 1; i >= 0; i--)
+                for (int i = reciepts.Count - 1; i >= 0; i--)
                 {
-                    if (reciept[i].GetName().ToLower() == refund[1].ToLower())
+                    if (reciepts[i].GetName().ToLower() == refund[1].ToLower())
                     {
-                        //refunds.AddRange(reciept.Select(reciept[i] => i));
-                        Reciept tRefund = new Reciept(reciept[i].GetName(), reciept[i].GetAAmount(), reciept[i].GetCAmount(), reciept[i].GetSAmount());
+						//refunds.AddRange(reciept.Select(reciept[i] => i));
+						// Reciept(reciepts[i].GetName(), reciepts[i].GetAAmount(), reciepts[i].GetCAmount(), reciepts[i].GetSAmount())
+
+						Reciept tRefund = reciepts[i];
                         refunds.Add(tRefund);
-                        reciept.RemoveAt(i);
+                        reciepts.RemoveAt(i);
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Succesfully refunded");
                         Console.ResetColor();
@@ -127,27 +140,25 @@ class Commands
             }
         }
     }
-
     public void Add(string name, string aTickets, string cTickets, string sTickets)
     {
-        Reciept reciepts = new Reciept(name, int.Parse(aTickets), int.Parse(cTickets), int.Parse(sTickets));
-        CheckDuplicate(reciepts);
-        reciept.Add(reciepts);
+        Reciept reciept = new Reciept(name, int.Parse(aTickets), int.Parse(cTickets), int.Parse(sTickets));
+        scomm.CheckDuplicate(reciept, reciepts, refunds);
+        reciepts.Add(reciept);
     }
-
     public void Print()
     {
         bool found = false;
-        if (reciept.Count != 0)
+        if (reciepts.Count != 0)
         {
             Console.WriteLine("Purchased:");
             
-            for (int i = 0; i < reciept.Count; i++)
+            for (int i = 0; i < reciepts.Count; i++)
             {
-                if (reciept[i] != null)
+                if (reciepts[i] != null)
                 {
                     Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine(reciept[i].GetName());
+                    Console.WriteLine(reciepts[i].GetName());
                     Console.ResetColor();
                     found = true;
                 }
@@ -174,7 +185,6 @@ class Commands
             Console.ResetColor();
         }
     }
-
     public void Find(string[] search)
     {
         if (search.Length > 2)
@@ -186,12 +196,12 @@ class Commands
             try
             {
                 bool found = false;
-                for (int i = reciept.Count - 1; i >= 0; i--)
+                for (int i = reciepts.Count - 1; i >= 0; i--)
                 {
-                    if (reciept[i].GetName().ToLower() == search[1].ToLower())
+                    if (reciepts[i].GetName().ToLower() == search[1].ToLower())
                     {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine(reciept[i].GetReciept());
+                        Console.WriteLine(reciepts[i].GetReciept());
                         Console.ResetColor();
                         found = true;
                     }
@@ -221,41 +231,87 @@ class Commands
             }
         }
     }
-
-    private void CheckDuplicate(Reciept reciepts)
-    {
-        for (int i = 0; i < reciept.Count | i < refunds.Count; i++)
-        {
-            if (reciept[i] != null)
-            {
-                if (reciept[i].GetName().ToLower() == reciepts.GetName().ToLower())
-                {
-                    throw new RecieptAlreadyExistException();
-                }
-            }
-        }
-    }
-
     public void AmountSold()
     {
-        for (int i = 0; i < reciept.Count | i < refunds.Count; i++)
-        {
-            if (reciept[i] != null)
-            {
-                Console.WriteLine($"Total Tickets sold: {reciept[i].GetAAmount() + reciept[i].GetCAmount() + reciept[i].GetSAmount()}");
-                Console.WriteLine($"Adult Tickets sold: {reciept[i].GetAAmount()}");
-                Console.WriteLine($"Child Tickets sold: {reciept[i].GetCAmount()}");
-                Console.WriteLine($"Senior Tickets sold: {reciept[i].GetSAmount()}");
-            }
-        }
+		int adultTickets = 0;
+		int childTickets = 0;
+		int seniorTickets = 0;
+       foreach(Reciept r in reciepts)
+		{
+			adultTickets += r.GetAAmount();
+			childTickets += r.GetCAmount();
+			seniorTickets += r.GetSAmount(); 
+		}
+		Console.WriteLine($"Total Tickets Sold: {adultTickets + childTickets + seniorTickets}");
+		Console.WriteLine($"Adult Tickets Sold: {adultTickets}");
+		Console.WriteLine($"Child Tickets Sold: {childTickets}");
+		Console.WriteLine($"Senior Tickets Sold: {seniorTickets}");
     }
+	public void AmountRefunded()
+    {
+		int adultTickets = 0;
+		int childTickets = 0;
+		int seniorTickets = 0;
+       foreach(Reciept r in refunds)
+		{
+			adultTickets += r.GetAAmount();
+			childTickets += r.GetCAmount();
+			seniorTickets += r.GetSAmount(); 
+		}
+		Console.WriteLine($"Total Tickets Refunded: {adultTickets + childTickets + seniorTickets}");
+		Console.WriteLine($"Adult Tickets Refunded: {adultTickets}");
+		Console.WriteLine($"Child Tickets Refunded: {childTickets}");
+		Console.WriteLine($"Senior Tickets Refunded: {seniorTickets}");
+    }
+	public void SaveReciepts()
+	{
+		StreamWriter Recieptsw = new StreamWriter(Recieptpath, true);
+		foreach (Reciept r in reciepts)
+		{
+			Recieptsw.WriteLine(r.Info()); ; 
+		}
+		Recieptsw.Close();
+	}
+	public void SaveRefunds()
+	{
+		StreamWriter Refundsw = new StreamWriter(Refundtpath, true);
+		foreach (Reciept r in refunds)
+		{
+			Refundsw.WriteLine(r.Info()); ;
+		}
+		Refundsw.Close();
+	}
+	public void LoadReciepts()
+	{
+		StreamReader Recietsr = new StreamReader(Recieptpath);
+		string text;
+        while ((text = Recietsr.ReadLine()) != null)
+        {
+            string[] strings = text.Split(char.Parse(","));
+			Reciept reciept = new Reciept(strings[0], int.Parse(strings[1]), int.Parse(strings[2]), int.Parse(strings[3]));
+			reciepts.Add(reciept);
+		}
+        Recietsr.Close();
+	}
+	public void LoadRefunds()
+	{
+		StreamReader Refundsr = new StreamReader(Refundtpath);
+		string text;
+		while ((text = Refundsr.ReadLine()) != null)
+		{
+			string[] strings = text.Split(char.Parse(","));
+			Reciept refund = new Reciept(strings[0], int.Parse(strings[1]), int.Parse(strings[2]), int.Parse(strings[3]));
+			refunds.Add(refund);
+		}
+		Refundsr.Close();
+	}
 }
 
 class RecieptAlreadyExistException : Exception { }
 
 class SystemCommands
 {
-    public void SyntaxError()
+	public void SyntaxError()
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("Syntax error");
@@ -267,6 +323,19 @@ class SystemCommands
         Console.WriteLine("Wrong input, try again");
         Console.ResetColor();
     }
+	public void CheckDuplicate(Reciept reciept, List<Reciept> reciepts, List<Reciept> refunds)
+	{
+		for (int i = 0; i < reciepts.Count | i < refunds.Count; i++)
+		{
+			if (reciepts[i] != null)
+			{
+				if (reciepts[i].GetName().ToLower() == reciept.GetName().ToLower())
+				{
+					throw new RecieptAlreadyExistException();
+				}
+			}
+		}
+	}
 }
 
 class Reciept
@@ -289,6 +358,10 @@ class Reciept
         this.cTickets = cTickets;
         this.sTickets = sTickets;
     }
+	public string Info()
+	{
+		return $"{name},{aTickets},{cTickets},{sTickets}";
+	}
     public int GetAAmount()
     {
         return aTickets;
