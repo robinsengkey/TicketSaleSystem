@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using MySql.Data.MySqlClient;
+
+// Läs om sql injections
 
 public class Program
 {
 	Commands commands = new Commands();
+
 	static void Main()
     {
         Program p = new Program();
@@ -13,17 +17,14 @@ public class Program
 
     void Run()
     {
-		while(true)
-		{
-			Console.WriteLine("Fatal Error: 404");
-			Console.WriteLine("-2147483647EE");
+		commands.Connect();
 
-
-		}
+		
 		commands.SaveReciepts();
 		commands.SaveRefunds();
 		commands.LoadReciepts();
 		commands.LoadRefunds();
+		
         while (true)
         {
             string input = Console.ReadLine().ToLower();
@@ -55,6 +56,18 @@ public class Program
 				case "load":
 					commands.LoadReciepts();
 					break;
+				case "l":
+					commands.LoadDB();
+					break;
+				case "f":
+					commands.FindDB(command);
+					break;
+				case "r":
+					commands.RefundDB(command);
+					break;
+				case "sum":
+					commands.Sum();
+					break;
 				default:
                     Console.WriteLine("Unknown Command");
                     break;
@@ -64,9 +77,10 @@ public class Program
 }
 class Commands
 {
+	MySqlConnection con;
 	string Recieptpath = @"C:..\..\..\Data\reciepts.txt";
 	string Refundtpath = @"C:..\..\..\Data\refunds.txt";
-    SystemCommands scomm = new SystemCommands();
+	SystemCommands scomm = new SystemCommands();
     List<Reciept> reciepts = new List<Reciept>();
     List<Reciept> refunds = new List<Reciept>(); 
     public void Purchase(string[] purchase)
@@ -145,6 +159,7 @@ class Commands
         Reciept reciept = new Reciept(name, int.Parse(aTickets), int.Parse(cTickets), int.Parse(sTickets));
         scomm.CheckDuplicate(reciept, reciepts, refunds);
         reciepts.Add(reciept);
+		AddDB(name, aTickets, cTickets, sTickets);
     }
     public void Print()
     {
@@ -304,6 +319,99 @@ class Commands
 			refunds.Add(refund);
 		}
 		Refundsr.Close();
+	}
+
+	public void Connect()
+	{
+		string cs = @"server=localhost;userid=root;password=Robin789;database=ticketsales";
+
+		con = new MySqlConnection(cs);
+		con.Open();
+	}
+	public void AddDB(string name, string aTickets, string cTickets, string sTickets)
+	{
+		var stm = $"insert into purchases (name,aTickets,cTickets,sTickets) values ('{name}',{aTickets},{cTickets},{sTickets});";
+		var cmd = new MySqlCommand(stm, con);
+
+		cmd.ExecuteScalar();
+	}
+	public void RefundDB(string[] refund)
+	{
+		var stm = $"UPDATE `ticketsales`.`purchases` SET `refunded` = 1 WHERE(`NAME` = '{refund[1]}');";
+		Console.WriteLine(stm);
+		var cmd = new MySqlCommand(stm, con);
+
+		cmd.ExecuteScalar();
+	}
+	public void LoadDB()
+	{
+		string sql = "SELECT * FROM purchases;";
+		var cmd = new MySqlCommand(sql, con);
+
+		MySqlDataReader rdr = cmd.ExecuteReader();
+
+		while (rdr.Read())
+		{
+			Console.Write("ID: {0}, Name: {1}, Adult Tickets: {2}, Child Tickets: {3}, Senior Tickets {4}", rdr.GetInt32(0), rdr.GetString(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(4));
+			if (rdr.GetInt32(5) == 1)
+			{
+				Console.Write(", !REFUNDED!");
+			}
+			Console.WriteLine("");
+		}
+	}
+	public void Sum()
+	{
+		string sql = "select refunded, sum(aTickets), sum(cTickets), sum(sTickets) from purchases group by 1;";
+		var cmd = new MySqlCommand(sql, con);
+
+		MySqlDataReader rdr = cmd.ExecuteReader();
+		while (rdr.Read())
+		{
+			var refunded = rdr.GetBoolean(0);
+			if (refunded)
+			{
+				Console.WriteLine("refunded:");
+			} else
+			{
+				Console.WriteLine("köpta:");
+			}
+			Console.WriteLine("Adult Tickets: {0}, Child Tickets: {1}, Senior Tickets {2}", rdr.GetInt32(1), rdr.GetInt32(2), rdr.GetInt32(3));
+		}
+	}
+	public void FindDB(string[] search)
+	{
+		if (search.Length > 2)
+		{
+			scomm.SyntaxError();
+		}
+		else
+		{
+			try
+			{
+				string sql = $"SELECT* FROM ticketsales.purchases where name = '{search[1]}';";
+
+				var cmd = new MySqlCommand(sql, con);
+
+				MySqlDataReader rdr = cmd.ExecuteReader();
+				bool found = false;
+				while (rdr.Read())
+				{
+					Console.WriteLine("ID: {0}, Name: {1}, Adult Tickets: {2}, Child Tickets: {3}, Senior Tickets {4}", rdr.GetInt32(0), rdr.GetString(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(4));
+					found = true;
+				}
+				if (!found)
+				{
+					Console.ForegroundColor = ConsoleColor.Yellow;
+					Console.WriteLine("There is no reciept with that name");
+					Console.ResetColor();
+				}
+			}
+			catch
+			{
+				scomm.WrongInput();
+			}
+		}
 	}
 }
 
