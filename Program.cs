@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 
 public class Program
@@ -16,9 +15,7 @@ public class Program
         while (true)
         {
             string input = Console.ReadLine().ToLower();
-
             string[] command = input.Split(" ");
-
             switch (command[0])
             {
                 case "exit":
@@ -86,7 +83,6 @@ class Commands
 	public void Connect()
 	{
 		string cs = @"server=localhost;userid=root;password=Robin789;database=ticketsales";
-
 		con = new MySqlConnection(cs);
 		con.Open();
 	}
@@ -94,24 +90,20 @@ class Commands
 	{
 		var stm = $"insert into purchases (name,aTickets,cTickets,sTickets) values ('{name}',{aTickets},{cTickets},{sTickets});";
 		var cmd = new MySqlCommand(stm, con);
-
 		cmd.ExecuteScalar();
 	}
 	public void Refund(string[] refund)
 	{
 		var stm = $"UPDATE `ticketsales`.`purchases` SET `refunded` = 1 WHERE(`NAME` = '{refund[1]}');";
-		Console.WriteLine(stm);
 		var cmd = new MySqlCommand(stm, con);
-
 		cmd.ExecuteScalar();
+		Console.WriteLine("Refunded");
 	}
 	public void Load()
 	{
 		string sql = "SELECT * FROM purchases;";
 		var cmd = new MySqlCommand(sql, con);
-
 		MySqlDataReader rdr = cmd.ExecuteReader();
-
 		while (rdr.Read())
 		{
 			Console.Write("ID: {0}, Name: {1}, Adult Tickets: {2}, Child Tickets: {3}, Senior Tickets {4}", rdr.GetInt32(0), rdr.GetString(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(4));
@@ -119,14 +111,15 @@ class Commands
 			{
 				Console.Write(", !REFUNDED!");
 			}
-			Console.WriteLine("");
+			Console.WriteLine("");	
+
 		}
+		rdr.Close();
 	}
 	public void Sum()
 	{
 		string sql = "select refunded, sum(aTickets), sum(cTickets), sum(sTickets) from purchases group by 1;";
 		var cmd = new MySqlCommand(sql, con);
-
 		MySqlDataReader rdr = cmd.ExecuteReader();
 		while (rdr.Read())
 		{
@@ -136,10 +129,11 @@ class Commands
 				Console.WriteLine("refunded:");
 			} else
 			{
-				Console.WriteLine("köpta:");
+				Console.WriteLine("purchased:");
 			}
-			Console.WriteLine("Adult Tickets: {0}, Child Tickets: {1}, Senior Tickets {2}", rdr.GetInt32(1), rdr.GetInt32(2), rdr.GetInt32(3));
+			Console.WriteLine("Adult Tickets: {0}, Child Tickets: {1}, Senior Tickets {2}, Total {3}", rdr.GetInt32(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(1+2+3));
 		}
+		rdr.Close();
 	}
 	public void Find(string[] search)
 	{
@@ -151,10 +145,8 @@ class Commands
 		{
 			try
 			{
-				string sql = $"SELECT* FROM ticketsales.purchases where name = '{search[1]}';";
-
+				string sql = $"SELECT* FROM purchases where name = '{search[1]}';";
 				var cmd = new MySqlCommand(sql, con);
-
 				MySqlDataReader rdr = cmd.ExecuteReader();
 				bool found = false;
 				while (rdr.Read())
@@ -168,6 +160,7 @@ class Commands
 					Console.WriteLine("There is no reciept with that name");
 					Console.ResetColor();
 				}
+				rdr.Close();
 			}
 			catch
 			{
@@ -191,4 +184,3 @@ class SystemCommands
         Console.ResetColor();
     }
 }
-
