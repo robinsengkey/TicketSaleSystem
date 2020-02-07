@@ -3,8 +3,6 @@
 ## Beskriv programmet: 
 Jag har i princip skrivit två program, de har samma funktionalitet men det som skiljer sig är att den ena använder sig av en List för att lagra data och sparar allting lokalt medans den andra använder sig av en databas. De är uppdelade i branches i mitt GIT Repo; master = med lista; DB = med databas. Anledning till varför jag valde att dela upp dem var för att det var en sån drastisk skillnad i hur de två systemen är uppbyggda. En annan anledning är att du antagligen inte kommer kunna köra databas programmet om du inte laddar ned MySQL och sätter upp det med samma inställningar som jag har. 
 
-### Master:
-
 ### Database branch:
 Databasen är byggd i [MySQL](https://www.mysql.com/) i databas språket SQL. Det första jag gjorde var att ladda ned MySQL.Data denpendencien genom NuGet.
 
@@ -13,15 +11,12 @@ Det första programmet måste göra är att upprätta en anslutning till databas
 ```
 public void Connect()
   {
-  	string cs = @"server=localhost;userid=root;password=Robin789;database=ticketsales";
+  	string cs = @"server=localhost;userid=root;password=Robin789;
+	database=ticketsales";
   	con = new MySqlConnection(cs);
   	con.Open();
   }
 ```
-![tabell](https://user-images.githubusercontent.com/57494687/73987674-65551c80-4941-11ea-8d1d-cf64c73ebcd9.png)
-
-Tabellen i databasen med några sparade transaktioner.
-
 Tabellen innehåller: 
 - ID - Detta är en int och ett primary key(den måste vara unik) Den har även en inställning som heter automatic index vilket gör att den skapar numret näst på tur automatiskt.
 - NAME - Detta är en sträng eller mer exakt en VARCHAR(45) 
@@ -33,7 +28,8 @@ När man köper någonting så så kollar den först satt inputen är giltig och
 ```
 public void Add(string name, string aTickets, string cTickets, string sTickets)
 	{
-		var stm = $"insert into purchases (name,aTickets,cTickets,sTickets) values ('{name}',{aTickets},{cTickets},{sTickets});";
+		var stm = $"insert into purchases (name,aTickets,cTickets,sTickets) 
+		values ('{name}', {aTickets},{cTickets},{sTickets});";
 		var cmd = new MySqlCommand(stm, con);
 		cmd.ExecuteScalar();
 	}
@@ -43,7 +39,8 @@ När man refundar någonting fungerar det ungefär likadant fast man använder e
 ```
 public void Refund(string[] refund)
 	{
-		var stm = $"UPDATE `ticketsales`.`purchases` SET `refunded` = 1 WHERE(`NAME` = '{refund[1]}');";
+		var stm = $"UPDATE `ticketsales`.`purchases` SET `refunded` = 1 
+		WHERE(`NAME` = '{refund[1]}');";
 		var cmd = new MySqlCommand(stm, con);
 		cmd.ExecuteScalar();
 		Console.WriteLine("Refunded");
@@ -59,7 +56,10 @@ public void Load()
 		MySqlDataReader rdr = cmd.ExecuteReader();
 		while (rdr.Read())
 		{
-			Console.Write("ID: {0}, Name: {1}, Adult Tickets: {2}, Child Tickets: {3}, Senior Tickets {4}", rdr.GetInt32(0), rdr.GetString(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(4));
+			Console.Write("ID: {0}, Name: {1}, Adult Tickets: {2}, 
+			Child Tickets: {3}, Senior Tickets {4}", rdr.GetInt32(0), 
+			rdr.GetString(1), rdr.GetInt32(2), rdr.GetInt32(3), 
+			rdr.GetInt32(4));
 			if (rdr.GetInt32(5) == 1)
 			{
 				Console.Write(", !REFUNDED!");
@@ -79,7 +79,9 @@ MySqlDataReader rdr = cmd.ExecuteReader();
 bool found = false;
 while (rdr.Read())
 {
-	Console.WriteLine("ID: {0}, Name: {1}, Adult Tickets: {2}, Child Tickets: {3}, Senior Tickets {4}", rdr.GetInt32(0), rdr.GetString(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(4));
+	Console.WriteLine("ID: {0}, Name: {1}, Adult Tickets: {2}, Child Tickets: {3}, 
+	Senior Tickets {4}", rdr.GetInt32(0), rdr.GetString(1), rdr.GetInt32(2), 
+	rdr.GetInt32(3), rdr.GetInt32(4));
 	found = true;
 }
 ```
@@ -88,7 +90,8 @@ För att skriva ut det totala antalet biljetter samt hur många biljetter av var
 ```
 public void Sum()
 	{
-		string sql = "select refunded, sum(aTickets), sum(cTickets), sum(sTickets) from purchases group by 1;";
+		string sql = "select refunded, sum(aTickets), sum(cTickets), 
+		sum(sTickets) from purchases group by 1;";
 		var cmd = new MySqlCommand(sql, con);
 		MySqlDataReader rdr = cmd.ExecuteReader();
 		while (rdr.Read())
@@ -101,12 +104,14 @@ public void Sum()
 			{
 				Console.WriteLine("purchased:");
 			}
-			Console.WriteLine("Adult Tickets: {0}, Child Tickets: {1}, Senior Tickets {2}, Total {3}", rdr.GetInt32(1), rdr.GetInt32(2), rdr.GetInt32(3), rdr.GetInt32(1+2+3));
+			Console.WriteLine("Adult Tickets: {0}, Child Tickets: {1}, 
+			Senior Tickets {2}, Total {3}", rdr.GetInt32(1), rdr.GetInt32(2), 
+			rdr.GetInt32(3), rdr.GetInt32(1+2+3));
 		}
 		rdr.Close();
 	}
-  ```
-  ###### Sammanfattning
+```
+###### Sammanfattning
 Det är i princip hela programmet. Någonting som man kan se är att det är betydligt smidigare att använda sig av databaser än listor och det blir mycket färre rader kod. Det bästa med databasen enligt mig (förutom att man kan komma åt den lättare) är att man slipper skapa en klass med alla värden. SQL tabellerna är mycket smidigare och lättare att hantera. SQL är även ett väldigt kraftfullt språk så det är många saker som går att göra betydligt lättare. Ett exempel är om man vill hitta ett visst element. I c# skulle jag behöva skriva en kod som söker igenom hela listan och kollar om elementet stämmer överens med inputen medans i SQL kan man bara skriva en kort rad med kod som uppfyller samma funktion.  
 Det finns säkerhetsbrister med SQL som SQL injections men i det här fallet motverkas dem till viss del genom att jag splittar inputen med ett mellanslag
 
