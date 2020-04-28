@@ -308,7 +308,7 @@ class SystemCommands
 	}
 	public void CheckDuplicate(Reciept reciept, List<Reciept> reciepts, List<Reciept> refunds)
 	{
-		for (int i = 0; i < reciepts.Count | i < refunds.Count; i++)
+		for (int i = 0; i < reciepts.Count; i++)
 		{
 			if (reciepts[i] != null)
 			{
@@ -388,3 +388,14 @@ class Reciept
 		return returnvalue;
 	}
 }
+
+/*
+ * Robin:
+ * 
+ * Bra jobbat!
+ * 
+ * Saknar dock ett help kommando, annars så funkar det bra med ett undantag som gör att man inte kan köpa biljetter
+ * om det finns fler refunded biljetter än sålda biljetter. Fixade det lite snabbt.
+ * 
+ * Vill gärna se din DB lösning sen. Kan streama den över discord.
+ */
