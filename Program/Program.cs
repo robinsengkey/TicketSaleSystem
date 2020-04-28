@@ -395,7 +395,9 @@ class Reciept
  * Bra jobbat!
  * 
  * Saknar dock ett help kommando, annars så funkar det bra med ett undantag som gör att man inte kan köpa biljetter
- * om det finns fler refunded biljetter än sålda biljetter. Fixade det lite snabbt.
+ * om det finns fler refunded biljetter än sålda biljetter. Fixade det lite snabbt. 
+ *
+ * Saknar en rapport och en kravspec.
  * 
  * Vill gärna se din DB lösning sen. Kan streama den över discord.
  */
